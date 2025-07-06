@@ -5,11 +5,13 @@ use crate::libqpdf::{
     qpdf_get_error_full_text, qpdf_get_error_message_detail,
 };
 
+#[derive(Debug)]
 pub struct QPDFError {
     parent: *mut _qpdf_data,
     error: *mut _qpdf_error,
 }
 
+#[derive(Debug, PartialEq)]
 pub enum QPDFErrorCode {
     Success,
     Warnings,
@@ -23,6 +25,12 @@ impl From<u32> for QPDFErrorCode {
             1 => QPDFErrorCode::Warnings,
             _ => QPDFErrorCode::Errors,
         }
+    }
+}
+
+impl From<i32> for QPDFErrorCode {
+    fn from(value: i32) -> Self {
+        (value as u32).into()
     }
 }
 

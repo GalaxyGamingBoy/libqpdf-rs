@@ -1,7 +1,8 @@
-use error::QPDFError;
+use error::{QPDFError, QPDFErrorCode};
 
 use crate::libqpdf;
 
+#[derive(Debug)]
 pub struct QPDF {
     data: *mut libqpdf::_qpdf_data,
 }
@@ -19,7 +20,7 @@ impl Default for QPDF {
     }
 }
 
-// Base Members
+// Base Methods
 impl QPDF {
     pub fn version(&self) -> i8 {
         unsafe { *libqpdf::qpdf_get_qpdf_version() }
@@ -66,6 +67,13 @@ impl QPDF {
         }
 
         QPDFError::new(self.data, error)
+    }
+}
+
+// Check Methods
+impl QPDF {
+    pub fn check_pdf(&self) -> QPDFErrorCode {
+        unsafe { libqpdf::qpdf_check_pdf(self.data).into() }
     }
 }
 
