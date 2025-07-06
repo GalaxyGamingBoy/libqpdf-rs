@@ -57,6 +57,16 @@ impl QPDF {
     pub fn has_warnings(&self) -> bool {
         unsafe { libqpdf::qpdf_more_warnings(self.data) == 1 }
     }
+
+    pub fn get_next_warning(&self) -> QPDFError {
+        let error: *mut libqpdf::_qpdf_error;
+
+        unsafe {
+            error = libqpdf::qpdf_next_warning(self.data);
+        }
+
+        QPDFError::new(self.data, error)
+    }
 }
 
 // Deconstructor
