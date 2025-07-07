@@ -99,3 +99,21 @@ fn check_set_pdf_info() {
     qpdf.pdf_set_info_key("/Author".to_string(), "Something".to_string());
     assert!(qpdf.pdf_get_info_key("/Author".to_string()).is_ok())
 }
+
+#[test]
+fn test_pdf_attribs() {
+    let qpdf = QPDF::default();
+    load(&qpdf);
+
+    assert!(!qpdf.pdf_is_linearized());
+    assert!(!qpdf.pdf_is_encrypted());
+    assert!(qpdf.pdf_allow_accessibility());
+    assert!(qpdf.pdf_allow_extract_all());
+    assert!(qpdf.pdf_allow_print_low_res());
+    assert!(qpdf.pdf_allow_print_high_res());
+    assert!(qpdf.pdf_allow_modify_assembly());
+    assert!(qpdf.pdf_allow_modify_form());
+    assert!(qpdf.pdf_allow_modify_annotation());
+    assert!(qpdf.pdf_allow_modify_other());
+    assert!(qpdf.pdf_allow_modify_all());
+}

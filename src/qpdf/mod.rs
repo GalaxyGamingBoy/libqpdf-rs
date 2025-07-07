@@ -184,6 +184,53 @@ impl QPDF {
     }
 }
 
+// PDF Status Methods
+impl QPDF {
+    pub fn pdf_is_linearized(&self) -> bool {
+        unsafe { libqpdf::qpdf_is_linearized(self.data) == 1 }
+    }
+
+    pub fn pdf_is_encrypted(&self) -> bool {
+        unsafe { libqpdf::qpdf_is_encrypted(self.data) == 1 }
+    }
+
+    pub fn pdf_allow_accessibility(&self) -> bool {
+        unsafe { libqpdf::qpdf_allow_accessibility(self.data) == 1 }
+    }
+
+    pub fn pdf_allow_extract_all(&self) -> bool {
+        unsafe { libqpdf::qpdf_allow_extract_all(self.data) == 1 }
+    }
+
+    pub fn pdf_allow_print_low_res(&self) -> bool {
+        unsafe { libqpdf::qpdf_allow_print_low_res(self.data) == 1 }
+    }
+
+    pub fn pdf_allow_print_high_res(&self) -> bool {
+        unsafe { libqpdf::qpdf_allow_print_high_res(self.data) == 1 }
+    }
+
+    pub fn pdf_allow_modify_assembly(&self) -> bool {
+        unsafe { libqpdf::qpdf_allow_modify_assembly(self.data) == 1 }
+    }
+
+    pub fn pdf_allow_modify_form(&self) -> bool {
+        unsafe { libqpdf::qpdf_allow_modify_form(self.data) == 1 }
+    }
+
+    pub fn pdf_allow_modify_annotation(&self) -> bool {
+        unsafe { libqpdf::qpdf_allow_modify_annotation(self.data) == 1 }
+    }
+
+    pub fn pdf_allow_modify_other(&self) -> bool {
+        unsafe { libqpdf::qpdf_allow_modify_other(self.data) == 1 }
+    }
+
+    pub fn pdf_allow_modify_all(&self) -> bool {
+        unsafe { libqpdf::qpdf_allow_modify_all(self.data) == 1 }
+    }
+}
+
 // Deconstructor
 impl Drop for QPDF {
     fn drop(&mut self) {
