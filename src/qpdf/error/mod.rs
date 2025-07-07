@@ -83,7 +83,10 @@ impl QPDFError {
         }
     }
 
-    fn exists(&self) -> bool {
+    pub(crate) fn exists(&self) -> bool {
         !(self.error.is_null() || self.parent.is_null())
     }
 }
+
+#[cfg(test)]
+mod tests;
