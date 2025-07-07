@@ -1,4 +1,8 @@
-use std::{ffi::CString, io::Error, path::PathBuf};
+use std::{
+    ffi::{CStr, CString},
+    io::Error,
+    path::PathBuf,
+};
 
 use error::{QPDFError, QPDFErrorCode};
 
@@ -132,6 +136,16 @@ impl QPDF {
     }
 }
 
+// Read Methods
+impl QPDF {
+    pub fn pdf_version(&self) -> String {
+        unsafe {
+            let version = libqpdf::qpdf_get_pdf_version(self.data);
+            CStr::from_ptr(version).to_string_lossy().to_string()
+        }
+    }
+}
+
 // Deconstructor
 impl Drop for QPDF {
     fn drop(&mut self) {
@@ -142,6 +156,7 @@ impl Drop for QPDF {
 }
 
 pub mod error;
+pub mod object;
 
 #[cfg(test)]
 mod tests;

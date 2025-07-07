@@ -3,6 +3,7 @@ use crate::qpdf::QPDF;
 #[test]
 fn create_error() {
     let qpdf = QPDF::default();
+    qpdf.enable_warning_supression();
 
     qpdf.check_pdf(); // No PDF Loaded
 
@@ -13,6 +14,7 @@ fn create_error() {
 #[test]
 fn error_information_is_valid() {
     let qpdf = QPDF::default();
+    qpdf.enable_warning_supression();
 
     qpdf.check_pdf();
 
