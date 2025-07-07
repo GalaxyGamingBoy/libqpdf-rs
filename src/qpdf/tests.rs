@@ -28,3 +28,27 @@ fn check_null_pdf() {
 
     assert_eq!(check, QPDFErrorCode::Errors)
 }
+
+// Process Methods
+#[test]
+fn process_empty_pdf() {
+    let qpdf = QPDF::default();
+
+    assert_eq!(QPDFErrorCode::Success, qpdf.empty());
+    assert_eq!(QPDFErrorCode::Success, qpdf.check_pdf());
+}
+
+#[test]
+fn process_pdf_file_without_password() {
+    let pdf = PathBuf::from(".").join("assets").join("testpdf1.pdf");
+    let qpdf = QPDF::default();
+
+    let status = qpdf.process_file(pdf, None);
+
+    assert_eq!(
+        QPDFErrorCode::Success,
+        status.unwrap_or(QPDFErrorCode::Errors)
+    );
+
+    assert_ne!(QPDFErrorCode::Errors, qpdf.check_pdf())
+}

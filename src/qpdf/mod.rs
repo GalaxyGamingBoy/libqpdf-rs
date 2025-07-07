@@ -1,10 +1,12 @@
+use std::{ffi::CString, io::Error, path::PathBuf};
+
 use error::{QPDFError, QPDFErrorCode};
 
 use crate::libqpdf;
 
 #[derive(Debug)]
 pub struct QPDF {
-    data: *mut libqpdf::_qpdf_data,
+    pub(crate) data: *mut libqpdf::_qpdf_data,
 }
 
 // Constructor
@@ -80,6 +82,53 @@ impl QPDF {
 impl QPDF {
     pub fn check_pdf(&self) -> QPDFErrorCode {
         unsafe { libqpdf::qpdf_check_pdf(self.data).into() }
+    }
+}
+
+// Parameter Methods
+impl QPDF {
+    pub fn attempt_recovery(&self, value: bool) {
+        unsafe { libqpdf::qpdf_set_attempt_recovery(self.data, value as i32) }
+    }
+
+    pub fn ignore_xref_streams(&self, value: bool) {
+        unsafe {
+            libqpdf::qpdf_set_ignore_xref_streams(self.data, value as i32);
+        }
+    }
+}
+
+// Process Methods
+impl QPDF {
+    pub fn process_file(
+        &self,
+        filename: PathBuf,
+        password: Option<String>,
+    ) -> Result<QPDFErrorCode, Error> {
+        let file = filename.canonicalize()?;
+        let password = password.unwrap_or("".to_string());
+
+        let status: i32;
+
+        unsafe {
+            let file = CString::new(file.to_string_lossy().to_string())
+                .expect("Filename to be valid string")
+                .into_raw();
+            let password = CString::new(password)
+                .expect("Password to be valid string")
+                .into_raw();
+
+            status = libqpdf::qpdf_read(self.data, file, password);
+
+            let _ = CString::from_raw(file);
+            let _ = CString::from_raw(password);
+        }
+
+        Ok(status.into())
+    }
+
+    pub fn empty(&self) -> QPDFErrorCode {
+        unsafe { libqpdf::qpdf_empty_pdf(self.data).into() }
     }
 }
 
