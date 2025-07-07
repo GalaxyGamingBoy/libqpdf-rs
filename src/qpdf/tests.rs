@@ -29,7 +29,7 @@ fn check_null_pdf() {
     assert_eq!(check, QPDFErrorCode::Errors)
 }
 
-// Process Methods
+// Read Process Methods
 #[test]
 fn process_empty_pdf() {
     let qpdf = QPDF::default();

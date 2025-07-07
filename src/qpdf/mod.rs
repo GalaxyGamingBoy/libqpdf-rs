@@ -98,7 +98,7 @@ impl QPDF {
     }
 }
 
-// Process Methods
+// Read Process Methods
 impl QPDF {
     pub fn process_file(
         &self,
