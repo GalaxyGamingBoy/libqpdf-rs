@@ -29,6 +29,12 @@ impl QPDF {
 
 // Error Reporting
 impl QPDF {
+    pub fn silence_errors(&self) {
+        unsafe {
+            libqpdf::qpdf_silence_errors(self.data);
+        }
+    }
+
     pub fn has_error(&self) -> bool {
         unsafe { libqpdf::qpdf_has_error(self.data) == 1 }
     }
