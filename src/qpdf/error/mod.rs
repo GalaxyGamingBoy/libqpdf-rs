@@ -6,35 +6,35 @@ use crate::libqpdf::{
 };
 
 #[derive(Debug)]
-pub struct QPDFError {
+pub struct QPDFInternalError {
     parent: *mut _qpdf_data,
     error: *mut _qpdf_error,
 }
 
 #[derive(Debug, PartialEq)]
-pub enum QPDFErrorCode {
+pub enum QPDFInternalErrorCode {
     Success,
     Warnings,
     Errors,
 }
 
-impl From<u32> for QPDFErrorCode {
+impl From<u32> for QPDFInternalErrorCode {
     fn from(value: u32) -> Self {
         match value {
-            0 => QPDFErrorCode::Success,
-            1 => QPDFErrorCode::Warnings,
-            _ => QPDFErrorCode::Errors,
+            0 => QPDFInternalErrorCode::Success,
+            1 => QPDFInternalErrorCode::Warnings,
+            _ => QPDFInternalErrorCode::Errors,
         }
     }
 }
 
-impl From<i32> for QPDFErrorCode {
+impl From<i32> for QPDFInternalErrorCode {
     fn from(value: i32) -> Self {
         (value as u32).into()
     }
 }
 
-impl QPDFError {
+impl QPDFInternalError {
     pub fn new(parent: *mut _qpdf_data, error: *mut _qpdf_error) -> Self {
         Self { parent, error }
     }
@@ -72,7 +72,7 @@ impl QPDFError {
         }
     }
 
-    pub fn code(&self) -> Result<QPDFErrorCode, &str> {
+    pub fn code(&self) -> Result<QPDFInternalErrorCode, &str> {
         if !self.exists() {
             return Err("QPDF error is invalid, is it out of scope?");
         }

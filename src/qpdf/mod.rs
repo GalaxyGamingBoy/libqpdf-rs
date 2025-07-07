@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-use error::{QPDFError, QPDFErrorCode};
+use error::{QPDFInternalError, QPDFInternalErrorCode};
 
 use crate::libqpdf;
 
@@ -45,14 +45,14 @@ impl QPDF {
         unsafe { libqpdf::qpdf_has_error(self.data) == 1 }
     }
 
-    pub fn get_error(&self) -> QPDFError {
+    pub fn get_error(&self) -> QPDFInternalError {
         let error: *mut libqpdf::_qpdf_error;
 
         unsafe {
             error = libqpdf::qpdf_get_error(self.data);
         }
 
-        QPDFError::new(self.data, error)
+        QPDFInternalError::new(self.data, error)
     }
 
     pub fn enable_warning_supression(&self) {
@@ -71,20 +71,20 @@ impl QPDF {
         unsafe { libqpdf::qpdf_more_warnings(self.data) == 1 }
     }
 
-    pub fn get_next_warning(&self) -> QPDFError {
+    pub fn get_next_warning(&self) -> QPDFInternalError {
         let error: *mut libqpdf::_qpdf_error;
 
         unsafe {
             error = libqpdf::qpdf_next_warning(self.data);
         }
 
-        QPDFError::new(self.data, error)
+        QPDFInternalError::new(self.data, error)
     }
 }
 
 // Check Methods
 impl QPDF {
-    pub fn check_pdf(&self) -> QPDFErrorCode {
+    pub fn check_pdf(&self) -> QPDFInternalErrorCode {
         unsafe { libqpdf::qpdf_check_pdf(self.data).into() }
     }
 }
@@ -108,7 +108,7 @@ impl QPDF {
         &self,
         filename: PathBuf,
         password: Option<String>,
-    ) -> Result<QPDFErrorCode, Error> {
+    ) -> Result<QPDFInternalErrorCode, Error> {
         let file = filename.canonicalize()?;
         let password = password.unwrap_or("".to_string());
 
@@ -131,7 +131,7 @@ impl QPDF {
         Ok(status.into())
     }
 
-    pub fn empty(&self) -> QPDFErrorCode {
+    pub fn empty(&self) -> QPDFInternalErrorCode {
         unsafe { libqpdf::qpdf_empty_pdf(self.data).into() }
     }
 }
@@ -144,6 +144,44 @@ impl QPDF {
             CStr::from_ptr(version).to_string_lossy().to_string()
         }
     }
+
+    pub fn pdf_extension_level(&self) -> i32 {
+        unsafe { libqpdf::qpdf_get_pdf_extension_level(self.data) }
+    }
+
+    pub fn pdf_get_info_key(&self, key: String) -> Result<String, QPDFErrors> {
+        unsafe {
+            let key = CString::new(key)
+                .expect("Key must be a valid string")
+                .into_raw();
+
+            let data = libqpdf::qpdf_get_info_key(self.data, key);
+
+            let _ = CString::from_raw(key);
+
+            if data.is_null() {
+                return Err(QPDFErrors::KeyNotFound);
+            }
+
+            Ok(CStr::from_ptr(data).to_string_lossy().to_string())
+        }
+    }
+
+    pub fn pdf_set_info_key(&self, key: String, val: String) {
+        unsafe {
+            let key = CString::new(key)
+                .expect("Key must be a valid string")
+                .into_raw();
+            let val = CString::new(val)
+                .expect("Val must be a valid string")
+                .into_raw();
+
+            libqpdf::qpdf_set_info_key(self.data, key, val);
+
+            let _ = CString::from_raw(key);
+            let _ = CString::from_raw(val);
+        }
+    }
 }
 
 // Deconstructor
@@ -153,6 +191,11 @@ impl Drop for QPDF {
             libqpdf::qpdf_cleanup(&raw mut self.data);
         }
     }
+}
+
+#[derive(Debug)]
+pub enum QPDFErrors {
+    KeyNotFound,
 }
 
 pub mod error;
