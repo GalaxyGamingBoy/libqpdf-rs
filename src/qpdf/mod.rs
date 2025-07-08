@@ -275,6 +275,56 @@ impl QPDF {
     }
 }
 
+// Pagination
+impl QPDF {
+    pub fn len_pages(&self) -> i32 {
+        unsafe { libqpdf::qpdf_get_num_pages(self.data) }
+    }
+
+    pub fn get_page(&self, at: usize) -> QPDFObjectHandler {
+        let handler = unsafe { libqpdf::qpdf_get_page_n(self.data, at) };
+        QPDFObjectHandler::new(self.data, handler)
+    }
+
+    pub fn find_page_by_id(&self, obj_id: ObjectId, generation: Generation) -> i32 {
+        unsafe { libqpdf::qpdf_find_page_by_id(self.data, obj_id, generation) }
+    }
+
+    pub fn find_page_by_handler(&self, handler: QPDFObjectHandler) -> i32 {
+        unsafe { libqpdf::qpdf_find_page_by_oh(self.data, handler.handler) }
+    }
+
+    pub fn remove_page(&self, handler: QPDFObjectHandler) -> QPDFInternalErrorCode {
+        unsafe { libqpdf::qpdf_remove_page(self.data, handler.handler).into() }
+    }
+
+    pub fn add_page(&self, new: QPDFObjectHandler, first: bool) -> QPDFInternalErrorCode {
+        unsafe { libqpdf::qpdf_add_page(self.data, new.parent, new.handler, first as i32).into() }
+    }
+
+    pub fn add_page_at(
+        &self,
+        new: QPDFObjectHandler,
+        prev: QPDFObjectHandler,
+        before: bool,
+    ) -> QPDFInternalErrorCode {
+        unsafe {
+            libqpdf::qpdf_add_page_at(
+                self.data,
+                new.parent,
+                new.handler,
+                before as i32,
+                prev.handler,
+            )
+            .into()
+        }
+    }
+
+    pub fn update_page_cache(&self) -> QPDFInternalErrorCode {
+        unsafe { libqpdf::qpdf_update_all_pages_cache(self.data).into() }
+    }
+}
+
 // Deconstructor
 impl Drop for QPDF {
     fn drop(&mut self) {

@@ -4,7 +4,7 @@ use std::ffi::CString;
 use libc::c_char;
 use types::{Generation, ObjectId, QPDFIsObjectType, QPDFModifyObjectTypes};
 
-use crate::libqpdf::{self, qpdf_oh_erase_item};
+use crate::libqpdf;
 
 pub struct QPDFObjectHandler {
     pub(crate) parent: *mut libqpdf::_qpdf_data,
