@@ -4,7 +4,7 @@ use std::ffi::CString;
 use libc::c_char;
 use types::{Generation, ObjectId, QPDFIsObjectType};
 
-use crate::libqpdf;
+use crate::libqpdf::{self, qpdf_oh_erase_item};
 
 pub struct QPDFObjectHandler {
     pub(crate) parent: *mut libqpdf::_qpdf_data,
@@ -278,6 +278,44 @@ impl QPDFObjectHandler {
                     .expect("Data to be a valid UTF-8 string")
                     .to_string())
             }
+        }
+    }
+}
+
+// Array Methods
+impl QPDFObjectHandler {
+    pub fn array_len(&self) -> i32 {
+        unsafe { libqpdf::qpdf_oh_get_array_n_items(self.parent, self.handler) }
+    }
+
+    pub fn array_get_at(&self, at: i32) -> QPDFObjectHandler {
+        let handler: u32 =
+            unsafe { libqpdf::qpdf_oh_get_array_item(self.parent, self.handler, at) };
+
+        QPDFObjectHandler::new(self.parent, handler)
+    }
+
+    pub fn array_set_at(&self, at: i32, item: QPDFObjectHandler) {
+        unsafe {
+            libqpdf::qpdf_oh_set_array_item(self.parent, self.handler, at, item.handler);
+        }
+    }
+
+    pub fn array_insert_at(&self, at: i32, item: QPDFObjectHandler) {
+        unsafe {
+            libqpdf::qpdf_oh_insert_item(self.parent, self.handler, at, item.handler);
+        }
+    }
+
+    pub fn array_erase_at(&self, at: i32) {
+        unsafe {
+            libqpdf::qpdf_oh_erase_item(self.parent, self.handler, at);
+        }
+    }
+
+    pub fn array_append(&self, item: QPDFObjectHandler) {
+        unsafe {
+            libqpdf::qpdf_oh_append_item(self.parent, self.handler, item.handler);
         }
     }
 }
