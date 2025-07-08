@@ -91,6 +91,14 @@ impl QPDFObjectHandler {
                     let _ = CString::from_raw(name);
                     out
                 }
+                QPDFIsObjectType::IsOrHasName(name) => {
+                    let name = CString::new(name).expect("Name to be valid").into_raw();
+
+                    let out: bool = libqpdf::qpdf_oh_is_or_has_name(p, h, name) == 1;
+
+                    let _ = CString::from_raw(name);
+                    out
+                }
                 QPDFIsObjectType::DictionaryOfType(a, b) => {
                     let a = CString::new(a).expect("Type to be valid").into_raw();
                     let b = CString::new(b).expect("Type to be valid").into_raw();
@@ -280,6 +288,19 @@ impl QPDFObjectHandler {
             }
         }
     }
+
+    pub fn dict(&self) -> QPDFObjectHandler {
+        let handler = unsafe { libqpdf::qpdf_oh_get_dict(self.parent, self.handler) };
+        QPDFObjectHandler::new(self.parent, handler)
+    }
+
+    pub fn object_id(&self) -> i32 {
+        unsafe { libqpdf::qpdf_oh_get_object_id(self.parent, self.handler) }
+    }
+
+    pub fn generation(&self) -> i32 {
+        unsafe { libqpdf::qpdf_oh_get_generation(self.parent, self.handler) }
+    }
 }
 
 // Array Methods
@@ -317,6 +338,86 @@ impl QPDFObjectHandler {
         unsafe {
             libqpdf::qpdf_oh_append_item(self.parent, self.handler, item.handler);
         }
+    }
+}
+
+// Dictionary Methods
+impl QPDFObjectHandler {
+    pub fn dict_has_key(&self, key: String) -> bool {
+        let key = CString::new(key)
+            .expect("Key must be a valid string")
+            .into_raw();
+
+        let result = unsafe { libqpdf::qpdf_oh_has_key(self.parent, self.handler, key) } == 1;
+
+        unsafe {
+            let _ = CString::from_raw(key);
+        }
+
+        result
+    }
+
+    pub fn dict_get_key(&self, key: String) -> QPDFObjectHandler {
+        let key = CString::new(key)
+            .expect("Key must be a valid string")
+            .into_raw();
+
+        let handler = unsafe { libqpdf::qpdf_oh_get_key(self.parent, self.handler, key) };
+
+        unsafe {
+            let _ = CString::from_raw(key);
+        }
+
+        QPDFObjectHandler::new(self.parent, handler)
+    }
+
+    pub fn dict_replace_key(&self, key: String, item: QPDFObjectHandler) {
+        let key = CString::new(key)
+            .expect("Key must be a valid string")
+            .into_raw();
+
+        unsafe {
+            libqpdf::qpdf_oh_replace_key(self.parent, self.handler, key, item.handler);
+        }
+
+        unsafe {
+            let _ = CString::from_raw(key);
+        }
+    }
+
+    pub fn dict_remove_key(&self, key: String) {
+        let key = CString::new(key)
+            .expect("Key must be a valid string")
+            .into_raw();
+
+        unsafe {
+            libqpdf::qpdf_oh_remove_key(self.parent, self.handler, key);
+        }
+
+        unsafe {
+            let _ = CString::from_raw(key);
+        }
+    }
+
+    pub fn dict_replace_or_remove_key(&self, key: String, item: QPDFObjectHandler) {
+        let key = CString::new(key)
+            .expect("Key must be a valid string")
+            .into_raw();
+
+        unsafe {
+            libqpdf::qpdf_oh_replace_or_remove_key(self.parent, self.handler, key, item.handler);
+        }
+
+        unsafe {
+            let _ = CString::from_raw(key);
+        }
+    }
+}
+
+// Other
+impl QPDFObjectHandler {
+    pub fn make_direct(&self) {
+        unsafe { libqpdf::qpdf_oh_make_direct(self.parent, self.handler) }
     }
 }
 

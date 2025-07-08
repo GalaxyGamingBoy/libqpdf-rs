@@ -14,6 +14,7 @@ pub enum QPDFIsObjectType {
     Indirect,
     Scalar,
     NameEquals(String),
+    IsOrHasName(String),
     DictionaryOfType(String, String),
 }
 
@@ -22,8 +23,8 @@ pub enum QPDFModifyObjectTypes {
     Null,
     Bool(bool),
     Integer(i32),
-    Real(String),
-    RealFromDouble(f32, i32),
+    RealFromString(String),
+    Real(f32, i32),
     Name(String),
     String(String),
     BinaryString(String),
