@@ -1,4 +1,4 @@
-pub enum QPDFIsObjectTypes {
+pub enum QPDFIsObjectType {
     Initialized,
     Bool,
     Null,
@@ -31,3 +31,6 @@ pub enum QPDFModifyObjectTypes {
     Dictionary,
     Stream,
 }
+
+pub type Generation = i32;
+pub type ObjectId = i32;

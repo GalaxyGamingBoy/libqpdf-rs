@@ -5,7 +5,10 @@ use std::{
 };
 
 use error::{QPDFInternalError, QPDFInternalErrorCode};
-use object::QPDFObjectHandler;
+use object::{
+    QPDFObjectHandler,
+    types::{Generation, ObjectId},
+};
 
 use crate::libqpdf;
 
@@ -256,7 +259,11 @@ impl QPDF {
         Some(QPDFObjectHandler::new(self.data, oh))
     }
 
-    pub fn get_object_id(&self, obj_id: i32, generation: i32) -> Option<QPDFObjectHandler> {
+    pub fn get_object_id(
+        &self,
+        obj_id: ObjectId,
+        generation: Generation,
+    ) -> Option<QPDFObjectHandler> {
         let oh: libqpdf::qpdf_oh;
         unsafe { oh = libqpdf::qpdf_get_object_by_id(self.data, obj_id, generation) }
 
