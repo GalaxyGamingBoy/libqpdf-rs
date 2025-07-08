@@ -1,7 +1,7 @@
 use core::slice;
-use std::usize;
+use std::ffi::CString;
 
-use libc::c_char;
+use types::QPDFIsObjectTypes;
 
 use crate::libqpdf;
 
@@ -10,12 +10,7 @@ pub struct QPDFObjectHandler {
     pub(crate) handler: libqpdf::qpdf_oh,
 }
 
-pub trait Manage<T> {
-    fn get(&self, key: String) -> T;
-    fn create(&self, key: String, val: T);
-    fn replace(&self, key: String, val: T);
-}
-
+// Clone Functionality
 impl Clone for QPDFObjectHandler {
     fn clone(&self) -> Self {
         let new: libqpdf::qpdf_oh;
@@ -31,6 +26,7 @@ impl Clone for QPDFObjectHandler {
     }
 }
 
+// Deconstructor
 impl Drop for QPDFObjectHandler {
     fn drop(&mut self) {
         unsafe {
@@ -39,13 +35,12 @@ impl Drop for QPDFObjectHandler {
     }
 }
 
+// Construction, Handling
 impl QPDFObjectHandler {
     pub fn new(parent: *mut libqpdf::_qpdf_data, handler: libqpdf::qpdf_oh) -> Self {
         Self { parent, handler }
     }
-}
 
-impl QPDFObjectHandler {
     pub fn make_indirect(&self) -> Option<QPDFObjectHandler> {
         let oh: libqpdf::qpdf_oh;
         unsafe {
@@ -65,9 +60,55 @@ impl QPDFObjectHandler {
     }
 }
 
+// Manage Methods
+impl QPDFObjectHandler {
+    pub fn is(&self, t: QPDFIsObjectTypes) -> bool {
+        let p = self.parent;
+        let h = self.handler;
+
+        unsafe {
+            match t {
+                QPDFIsObjectTypes::Initialized => libqpdf::qpdf_oh_is_initialized(p, h) == 0,
+                QPDFIsObjectTypes::Bool => libqpdf::qpdf_oh_is_bool(p, h) == 1,
+                QPDFIsObjectTypes::Null => libqpdf::qpdf_oh_is_null(p, h) == 1,
+                QPDFIsObjectTypes::Integer => libqpdf::qpdf_oh_is_integer(p, h) == 1,
+                QPDFIsObjectTypes::Real => libqpdf::qpdf_oh_is_real(p, h) == 1,
+                QPDFIsObjectTypes::Name => libqpdf::qpdf_oh_is_name(p, h) == 1,
+                QPDFIsObjectTypes::String => libqpdf::qpdf_oh_is_string(p, h) == 1,
+                QPDFIsObjectTypes::Operator => libqpdf::qpdf_oh_is_operator(p, h) == 1,
+                QPDFIsObjectTypes::InlineImage => libqpdf::qpdf_oh_is_inline_image(p, h) == 1,
+                QPDFIsObjectTypes::Array => libqpdf::qpdf_oh_is_array(p, h) == 1,
+                QPDFIsObjectTypes::Dictionary => libqpdf::qpdf_oh_is_dictionary(p, h) == 1,
+                QPDFIsObjectTypes::Stream => libqpdf::qpdf_oh_is_stream(p, h) == 1,
+                QPDFIsObjectTypes::Indirect => libqpdf::qpdf_oh_is_indirect(p, h) == 1,
+                QPDFIsObjectTypes::Scalar => libqpdf::qpdf_oh_is_scalar(p, h) == 1,
+                QPDFIsObjectTypes::NameEquals(name) => {
+                    let name = CString::new(name).expect("Name to be valid").into_raw();
+
+                    let out: bool = libqpdf::qpdf_oh_is_name_and_equals(p, h, name) == 1;
+
+                    let _ = CString::from_raw(name);
+                    out
+                }
+                QPDFIsObjectTypes::DictionaryOfType(a, b) => {
+                    let a = CString::new(a).expect("Type to be valid").into_raw();
+                    let b = CString::new(b).expect("Type to be valid").into_raw();
+
+                    let out: bool = libqpdf::qpdf_oh_is_dictionary_of_type(p, h, a, b) == 1;
+
+                    let _ = CString::from_raw(a);
+                    let _ = CString::from_raw(b);
+                    out
+                }
+                _ => unimplemented!(),
+            }
+        }
+    }
+}
+
 // Helper
 impl QPDFObjectHandler {
-    fn get_null_safe_string(&self, ptr: *const u8) -> String {
+    fn get_unicode_binary_string(&self, ptr: *const u8) -> String {
         let len: usize;
         let bytes: &[u8];
 
