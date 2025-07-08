@@ -9,6 +9,7 @@ use object::{
     QPDFObjectHandler,
     types::{Generation, ObjectId},
 };
+use read::QPDFReadParams;
 
 use crate::libqpdf;
 
@@ -95,14 +96,19 @@ impl QPDF {
 
 // Parameter Methods
 impl QPDF {
-    pub fn attempt_recovery(&self, value: bool) {
+    pub(crate) fn attempt_recovery(&self, value: bool) {
         unsafe { libqpdf::qpdf_set_attempt_recovery(self.data, value as i32) }
     }
 
-    pub fn ignore_xref_streams(&self, value: bool) {
+    pub(crate) fn ignore_xref_streams(&self, value: bool) {
         unsafe {
             libqpdf::qpdf_set_ignore_xref_streams(self.data, value as i32);
         }
+    }
+
+    pub fn process_read_params(&self, params: QPDFReadParams) {
+        self.attempt_recovery(params.attempt_recovery);
+        self.ignore_xref_streams(params.ignore_xref);
     }
 }
 
@@ -111,8 +117,11 @@ impl QPDF {
     pub fn process_file(
         &self,
         filename: PathBuf,
+        params: QPDFReadParams,
         password: Option<String>,
     ) -> Result<QPDFInternalErrorCode, Error> {
+        self.process_read_params(params);
+
         let file = filename.canonicalize()?;
         let password = password.unwrap_or("".to_string());
 
@@ -341,6 +350,7 @@ pub enum QPDFErrors {
 
 pub mod error;
 pub mod object;
+pub mod read;
 
 #[cfg(test)]
 mod tests;

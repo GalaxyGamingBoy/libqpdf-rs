@@ -3,7 +3,9 @@ use super::*;
 fn load(qpdf: &QPDF) {
     let pdf = PathBuf::from(".").join("assets").join("testpdf1.pdf");
     qpdf.enable_warning_supression();
-    qpdf.process_file(pdf, None).unwrap();
+
+    qpdf.process_file(pdf, QPDFReadParams::default(), None)
+        .unwrap();
 }
 
 // Base Methods
@@ -53,7 +55,7 @@ fn process_pdf_file_without_password() {
     let qpdf = QPDF::default();
     qpdf.enable_warning_supression();
 
-    let status = qpdf.process_file(pdf, None);
+    let status = qpdf.process_file(pdf, QPDFReadParams::default().with_attempt_recovery(), None);
 
     assert_eq!(
         QPDFInternalErrorCode::Success,

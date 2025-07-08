@@ -1,13 +1,12 @@
 use std::path::PathBuf;
 
-use crate::qpdf::QPDF;
-
-use super::*;
+use crate::qpdf::{QPDF, read::QPDFReadParams};
 
 fn load(qpdf: &QPDF) {
     let pdf = PathBuf::from(".").join("assets").join("testpdf1.pdf");
     qpdf.enable_warning_supression();
-    qpdf.process_file(pdf, None).unwrap();
+    qpdf.process_file(pdf, QPDFReadParams::default(), None)
+        .unwrap();
 }
 
 #[test]
