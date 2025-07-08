@@ -1,6 +1,7 @@
 use core::slice;
 use std::ffi::CString;
 
+use libc::c_char;
 use types::{Generation, ObjectId, QPDFIsObjectType};
 
 use crate::libqpdf;
@@ -60,7 +61,7 @@ impl QPDFObjectHandler {
     }
 }
 
-// Manage Methods
+// Type Checking Method
 impl QPDFObjectHandler {
     pub fn is(&self, t: QPDFIsObjectType) -> bool {
         let p = self.parent;
@@ -100,26 +101,184 @@ impl QPDFObjectHandler {
                     let _ = CString::from_raw(b);
                     out
                 }
-                _ => unimplemented!(),
             }
         }
     }
 }
 
-// Helper
-impl QPDFObjectHandler {
-    fn get_unicode_binary_string(&self, ptr: *const u8) -> String {
-        let len: usize;
-        let bytes: &[u8];
+// Get Methods
+impl TryInto<bool> for QPDFObjectHandler {
+    type Error = ();
 
-        unsafe {
-            len = libqpdf::qpdf_get_last_string_length(self.parent);
-            bytes = slice::from_raw_parts(ptr, len);
+    fn try_into(self) -> Result<bool, Self::Error> {
+        let mut val: i32 = 0;
+
+        let invalid =
+            unsafe { libqpdf::qpdf_oh_get_value_as_bool(self.parent, self.handler, &mut val) } == 0;
+
+        if invalid {
+            return Err(());
         }
 
-        str::from_utf8(bytes)
-            .expect("Data must be a valid UTF-8 string")
-            .to_string()
+        match invalid {
+            true => Err(()),
+            _ => Ok(val == 1),
+        }
+    }
+}
+
+impl TryInto<i64> for QPDFObjectHandler {
+    type Error = ();
+
+    fn try_into(self) -> Result<i64, Self::Error> {
+        let mut val: i64 = 0;
+
+        let invalid =
+            unsafe { libqpdf::qpdf_oh_get_value_as_longlong(self.parent, self.handler, &mut val) }
+                == 0;
+
+        match invalid {
+            true => Err(()),
+            _ => Ok(val),
+        }
+    }
+}
+
+impl TryInto<i32> for QPDFObjectHandler {
+    type Error = ();
+
+    fn try_into(self) -> Result<i32, Self::Error> {
+        let mut val: i32 = 0;
+
+        let invalid =
+            unsafe { libqpdf::qpdf_oh_get_value_as_int(self.parent, self.handler, &mut val) } == 0;
+
+        match invalid {
+            true => Err(()),
+            _ => Ok(val),
+        }
+    }
+}
+
+impl TryInto<u64> for QPDFObjectHandler {
+    type Error = ();
+
+    fn try_into(self) -> Result<u64, Self::Error> {
+        let mut val: u64 = 0;
+
+        let invalid =
+            unsafe { libqpdf::qpdf_oh_get_value_as_ulonglong(self.parent, self.handler, &mut val) }
+                == 0;
+
+        match invalid {
+            true => Err(()),
+            _ => Ok(val),
+        }
+    }
+}
+
+impl TryInto<u32> for QPDFObjectHandler {
+    type Error = ();
+
+    fn try_into(self) -> Result<u32, Self::Error> {
+        let mut val: u32 = 0;
+
+        let invalid =
+            unsafe { libqpdf::qpdf_oh_get_value_as_uint(self.parent, self.handler, &mut val) } == 0;
+
+        match invalid {
+            true => Err(()),
+            _ => Ok(val),
+        }
+    }
+}
+
+impl TryInto<f64> for QPDFObjectHandler {
+    type Error = ();
+
+    fn try_into(self) -> Result<f64, Self::Error> {
+        let mut val: f64 = 0.0;
+
+        let invalid =
+            unsafe { libqpdf::qpdf_oh_get_value_as_number(self.parent, self.handler, &mut val) }
+                == 0;
+
+        match invalid {
+            true => Err(()),
+            _ => Ok(val),
+        }
+    }
+}
+
+impl TryInto<String> for QPDFObjectHandler {
+    type Error = ();
+
+    fn try_into(self) -> Result<String, Self::Error> {
+        let mut len: usize = 0;
+        let mut ptr: *const c_char = std::ptr::null();
+
+        let invalid = unsafe {
+            libqpdf::qpdf_oh_get_value_as_utf8(self.parent, self.handler, &raw mut ptr, &mut len)
+        } == 0;
+
+        match invalid {
+            true => Err(()),
+            _ => {
+                let bytes = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), len) };
+
+                Ok(str::from_utf8(bytes)
+                    .expect("Data to be a valid UTF-8 string")
+                    .to_string())
+            }
+        }
+    }
+}
+
+impl TryInto<Vec<u8>> for QPDFObjectHandler {
+    type Error = ();
+
+    fn try_into(self) -> Result<Vec<u8>, Self::Error> {
+        let mut len: usize = 0;
+        let mut ptr: *const c_char = std::ptr::null();
+
+        let invalid = unsafe {
+            libqpdf::qpdf_oh_get_value_as_utf8(self.parent, self.handler, &raw mut ptr, &mut len)
+        } == 0;
+
+        match invalid {
+            true => Err(()),
+            _ => {
+                let bytes = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), len) };
+                Ok(bytes.to_vec())
+            }
+        }
+    }
+}
+
+impl QPDFObjectHandler {
+    pub fn name(&self) -> Result<String, ()> {
+        let mut len: usize = 0;
+        let mut ptr: *const c_char = std::ptr::null();
+
+        let invalid = unsafe {
+            libqpdf::qpdf_oh_get_value_as_name(
+                self.parent,
+                self.handler,
+                &raw mut ptr,
+                &raw mut len,
+            )
+        } == 0;
+
+        match invalid {
+            true => Err(()),
+            _ => {
+                let bytes = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), len) };
+
+                Ok(str::from_utf8(bytes)
+                    .expect("Data to be a valid UTF-8 string")
+                    .to_string())
+            }
+        }
     }
 }
 
