@@ -1,0 +1,15 @@
+pub enum QPDFObjectTypes {
+    Bool,
+    Null,
+    Integer,
+    Real,
+    Name,
+    String,
+    Operator,
+    InlineImage,
+    Array,
+    Dictionary,
+    Stream,
+    Indirect,
+    Scalar,
+}

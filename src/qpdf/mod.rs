@@ -5,6 +5,7 @@ use std::{
 };
 
 use error::{QPDFInternalError, QPDFInternalErrorCode};
+use object::QPDFObjectHandler;
 
 use crate::libqpdf;
 
@@ -228,6 +229,42 @@ impl QPDF {
 
     pub fn pdf_allow_modify_all(&self) -> bool {
         unsafe { libqpdf::qpdf_allow_modify_all(self.data) == 1 }
+    }
+}
+
+// Object Handling
+impl QPDF {
+    pub fn get_object_trailer(&self) -> Option<QPDFObjectHandler> {
+        let oh: libqpdf::qpdf_oh;
+        unsafe { oh = libqpdf::qpdf_get_trailer(self.data) }
+
+        if oh == 0 {
+            return None;
+        }
+
+        Some(QPDFObjectHandler::new(self.data, oh))
+    }
+
+    pub fn get_object_root(&self) -> Option<QPDFObjectHandler> {
+        let oh: libqpdf::qpdf_oh;
+        unsafe { oh = libqpdf::qpdf_get_root(self.data) }
+
+        if oh == 0 {
+            return None;
+        }
+
+        Some(QPDFObjectHandler::new(self.data, oh))
+    }
+
+    pub fn get_object_id(&self, obj_id: i32, generation: i32) -> Option<QPDFObjectHandler> {
+        let oh: libqpdf::qpdf_oh;
+        unsafe { oh = libqpdf::qpdf_get_object_by_id(self.data, obj_id, generation) }
+
+        if oh == 0 {
+            return None;
+        }
+
+        Some(QPDFObjectHandler::new(self.data, oh))
     }
 }
 
