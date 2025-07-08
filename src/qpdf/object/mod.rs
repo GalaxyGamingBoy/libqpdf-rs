@@ -2,7 +2,7 @@ use core::slice;
 use std::ffi::CString;
 
 use libc::c_char;
-use types::{Generation, ObjectId, QPDFIsObjectType};
+use types::{Generation, ObjectId, QPDFIsObjectType, QPDFModifyObjectTypes};
 
 use crate::libqpdf::{self, qpdf_oh_erase_item};
 
@@ -294,12 +294,58 @@ impl QPDFObjectHandler {
         QPDFObjectHandler::new(self.parent, handler)
     }
 
-    pub fn object_id(&self) -> i32 {
+    pub fn object_id(&self) -> ObjectId {
         unsafe { libqpdf::qpdf_oh_get_object_id(self.parent, self.handler) }
     }
 
-    pub fn generation(&self) -> i32 {
+    pub fn generation(&self) -> Generation {
         unsafe { libqpdf::qpdf_oh_get_generation(self.parent, self.handler) }
+    }
+}
+
+// Manage Methods
+impl QPDFObjectHandler {
+    pub fn set(&self, t: QPDFModifyObjectTypes) -> QPDFObjectHandler {
+        let p = self.parent;
+
+        let handler = unsafe {
+            match t {
+                QPDFModifyObjectTypes::Uninitialized => libqpdf::qpdf_oh_new_uninitialized(p),
+                QPDFModifyObjectTypes::Null => libqpdf::qpdf_oh_new_null(p),
+                QPDFModifyObjectTypes::Bool(v) => libqpdf::qpdf_oh_new_bool(p, v as i32),
+                QPDFModifyObjectTypes::Integer(v) => libqpdf::qpdf_oh_new_integer(p, v),
+                QPDFModifyObjectTypes::Real(v, l) => libqpdf::qpdf_oh_new_real_from_double(p, v, l),
+                QPDFModifyObjectTypes::Array => libqpdf::qpdf_oh_new_array(p),
+                QPDFModifyObjectTypes::Dictionary => libqpdf::qpdf_oh_new_dictionary(p),
+                QPDFModifyObjectTypes::Stream => libqpdf::qpdf_oh_new_stream(p),
+                QPDFModifyObjectTypes::RealFromString(v) => {
+                    let v = CString::new(v).expect("Valid CString").into_raw();
+                    let h = libqpdf::qpdf_oh_new_real_from_string(p, v);
+                    let _ = CString::from_raw(v);
+                    h
+                }
+                QPDFModifyObjectTypes::Name(v) => {
+                    let v = CString::new(v).expect("Valid CString").into_raw();
+                    let h = libqpdf::qpdf_oh_new_name(p, v);
+                    let _ = CString::from_raw(v);
+                    h
+                }
+                QPDFModifyObjectTypes::String(v) => {
+                    let v = CString::new(v).expect("Valid CString").into_raw();
+                    let h = libqpdf::qpdf_oh_new_unicode_string(p, v);
+                    let _ = CString::from_raw(v);
+                    h
+                }
+                QPDFModifyObjectTypes::BinaryString(v) => {
+                    let b = v.into_bytes();
+                    let t: *const i8 = b.as_ptr() as *const i8;
+                    let l = b.len();
+                    libqpdf::qpdf_oh_new_binary_unicode_string(p, t, l)
+                }
+            }
+        };
+
+        QPDFObjectHandler::new(p, handler)
     }
 }
 
@@ -422,3 +468,6 @@ impl QPDFObjectHandler {
 }
 
 pub mod types;
+
+#[cfg(test)]
+mod tests;
