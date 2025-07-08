@@ -15,11 +15,16 @@ fn main() {
 
     if cfg!(windows) {
         println!("cargo:rustc-link-search=native=C:\\libs\\qpdf");
-    } else {
+    }
+
+    if cfg!(unix) {
         println!("cargo:rustc-link-search=native=/usr/local/lib");
+    }
+
+    if cfg!(target_os = "macos") {
         println!("cargo:rustc-link-search=native=/opt/homebrew/opt/openssl@3/lib");
         println!("cargo:rustc-link-search=native=/opt/homebrew/opt/gnutls/lib");
-        println!("cargo:rustc-link-search-search=native=/opt/homebrew/opt/zlib/lib");
+        println!("cargo:rustc-link-search=native=/opt/homebrew/opt/zlib/lib");
         println!("cargo:rustc-link-search=native=/opt/homebrew/opt/jpeg/lib");
     }
 
