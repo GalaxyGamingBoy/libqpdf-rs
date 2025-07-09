@@ -10,6 +10,7 @@ use object::{
     types::{Generation, ObjectId},
 };
 use read::QPDFReadParams;
+use write::{QPDFWriteParams, QPDFWriteVersion};
 
 use crate::libqpdf;
 
@@ -94,7 +95,7 @@ impl QPDF {
     }
 }
 
-// Parameter Methods
+// Read Parameter Methods
 impl QPDF {
     pub(crate) fn attempt_recovery(&self, value: bool) {
         unsafe { libqpdf::qpdf_set_attempt_recovery(self.data, value as i32) }
@@ -194,6 +195,87 @@ impl QPDF {
             let _ = CString::from_raw(key);
             let _ = CString::from_raw(val);
         }
+    }
+}
+
+// Write Parameter Methods
+impl QPDF {
+    pub fn process_write_params(&self, params: QPDFWriteParams) {
+        let d = self.data;
+
+        unsafe {
+            libqpdf::qpdf_set_object_stream_mode(d, params.object_stream as u32);
+            libqpdf::qpdf_set_stream_data_mode(d, params.stream_data as u32);
+            libqpdf::qpdf_set_compress_streams(d, params.compress_stream as i32);
+            libqpdf::qpdf_set_decode_level(d, params.decode_level as u32);
+            libqpdf::qpdf_set_preserve_unreferenced_objects(
+                d,
+                params.preserve_unreferenced_objects as i32,
+            );
+            libqpdf::qpdf_set_newline_before_endstream(d, params.newline_before_endstream as i32);
+            libqpdf::qpdf_set_content_normalization(d, params.content_normalization as i32);
+            libqpdf::qpdf_set_qdf_mode(d, params.qdf_mode as i32);
+            libqpdf::qpdf_set_suppress_original_object_IDs(
+                d,
+                params.suppress_original_object_ids as i32,
+            );
+            libqpdf::qpdf_set_preserve_encryption(d, params.preserve_encryption as i32);
+            libqpdf::qpdf_set_linearization(d, params.linearization as i32);
+
+            if params.static_id {
+                libqpdf::qpdf_set_deterministic_ID(d, 0);
+                libqpdf::qpdf_set_static_ID(d, 0);
+            }
+
+            match params.version {
+                QPDFWriteVersion::MinVersion(v) => {
+                    let v = CString::new(v).expect("Version to be a valid CString");
+                    libqpdf::qpdf_set_minimum_pdf_version(d, v.as_ptr());
+                }
+                QPDFWriteVersion::MinVersionAndExtension(v, e) => {
+                    let v = CString::new(v).expect("Version to be a valid CString");
+                    libqpdf::qpdf_set_minimum_pdf_version_and_extension(d, v.as_ptr(), e);
+                }
+                QPDFWriteVersion::ForceVersion(v) => {
+                    let v = CString::new(v).expect("Version to be a valid CString");
+                    libqpdf::qpdf_force_pdf_version(d, v.as_ptr());
+                }
+                QPDFWriteVersion::ForceVersionAndExtension(v, e) => {
+                    let v = CString::new(v).expect("Version to be a valid CString");
+                    libqpdf::qpdf_force_pdf_version_and_extension(d, v.as_ptr(), e);
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
+// Write Methods
+impl QPDF {
+    pub fn write_init(
+        &self,
+        file: PathBuf,
+        params: QPDFWriteParams,
+    ) -> Result<QPDFInternalErrorCode, Error> {
+        let status: QPDFInternalErrorCode;
+
+        unsafe {
+            let file = CString::new(file.to_string_lossy().to_string())
+                .expect("Filename to be valid string")
+                .into_raw();
+
+            status = libqpdf::qpdf_init_write(self.data, file).into();
+
+            let _ = CString::from_raw(file);
+        }
+
+        self.process_write_params(params);
+
+        Ok(status)
+    }
+
+    pub fn write(&self) -> QPDFInternalErrorCode {
+        unsafe { libqpdf::qpdf_write(self.data).into() }
     }
 }
 
@@ -351,6 +433,7 @@ pub enum QPDFErrors {
 pub mod error;
 pub mod object;
 pub mod read;
+pub mod write;
 
 #[cfg(test)]
 mod tests;

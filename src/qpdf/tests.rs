@@ -50,6 +50,19 @@ fn process_empty_pdf() {
 }
 
 #[test]
+fn write_empty_pdf() {
+    let pdf = PathBuf::from(".").join("assets").join(".outpdf.test.pdf");
+    let qpdf = QPDF::default();
+
+    assert_eq!(QPDFInternalErrorCode::Success, qpdf.empty());
+    assert_eq!(
+        QPDFInternalErrorCode::Success,
+        qpdf.write_init(pdf, QPDFWriteParams::default()).unwrap()
+    );
+    assert_eq!(QPDFInternalErrorCode::Success, qpdf.write())
+}
+
+#[test]
 fn process_pdf_file_without_password() {
     let pdf = PathBuf::from(".").join("assets").join("testpdf1.pdf");
     let qpdf = QPDF::default();
