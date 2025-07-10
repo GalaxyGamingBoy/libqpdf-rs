@@ -1000,25 +1000,4 @@ extern "C" {
     /* removePage() */
     QPDF_DLL
     QPDF_ERROR_CODE qpdf_remove_page(qpdf_data qpdf, qpdf_oh page);
-#ifdef __cplusplus
-}
-
-// These C++ functions make it easier to write C++ code that interoperates with the C API.
-// See examples/extend-c-api.
-
-# include <functional>
-# include <memory>
-
-# include <qpdf/QPDF.hh>
-
-// Retrieve the real QPDF object attached to this qpdf_data.
-QPDF_DLL
-std::shared_ptr<QPDF> qpdf_c_get_qpdf(qpdf_data qpdf);
-
-// Wrap a C++ function that may throw an exception to translate the exception for retrieval using
-// the normal QPDF C API methods.
-QPDF_DLL
-QPDF_ERROR_CODE qpdf_c_wrap(qpdf_data qpdf, std::function<void()> fn);
-#endif
-
 #endif /* QPDF_C_H */
