@@ -372,9 +372,13 @@ impl QPDF {
         unsafe { libqpdf::qpdf_get_num_pages(self.data) }
     }
 
-    pub fn get_page(&self, at: usize) -> QPDFObjectHandler {
+    pub fn get_page(&self, at: usize) -> Option<QPDFObjectHandler> {
+        if at >= (self.len_pages() as usize) {
+            return None;
+        }
+
         let handler = unsafe { libqpdf::qpdf_get_page_n(self.data, at) };
-        QPDFObjectHandler::new(self.data, handler)
+        Some(QPDFObjectHandler::new(self.data, handler))
     }
 
     pub fn find_page_by_id(&self, obj_id: ObjectId, generation: Generation) -> i32 {
